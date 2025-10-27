@@ -1,0 +1,652 @@
+/* src/assets/CabinDisplay.css */
+:root {
+    --primary: #1e5a8c;
+    --primary-dark: #0d3b66;
+    --primary-light: #3a7bb6;
+    --secondary: #d9534f;
+    --accent: #5cb85c;
+    --light: #f8f9fa;
+    --dark: #2c3e50;
+    --gray: #6c757d;
+    --light-gray: #e9ecef;
+    --border: #dee2e6;
+    --warning: #f0ad4e;
+    --info: #5bc0de;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+body {
+    background-color: #f5f7fa;
+    color: var(--dark);
+    line-height: 1.6;
+}
+
+/* Header Styles - Matching existing theme */
+.top-bar {
+    background-color: var(--primary-dark);
+    color: white;
+    padding: 8px 0;
+    font-size: 14px;
+}
+
+.top-bar-content {
+    display: flex;
+    justify-content: space-between;
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.top-bar-links a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+}
+
+.top-bar-links a:hover {
+    text-decoration: underline;
+}
+
+header {
+    background-color: white;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.container {
+    width: 90%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 15px;
+}
+
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 0;
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.emblem {
+    width: 60px;
+    height: 60px;
+    background: var(--primary);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 24px;
+    border: 2px solid var(--primary-dark);
+}
+
+.logo-text {
+    display: flex;
+    flex-direction: column;
+}
+
+.logo-main {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--primary);
+    line-height: 1.2;
+}
+
+.logo-sub {
+    font-size: 14px;
+    color: var(--gray);
+}
+
+.nav-links {
+    display: flex;
+    list-style: none;
+    gap: 25px;
+}
+
+.nav-links a {
+    text-decoration: none;
+    color: var(--dark);
+    font-weight: 500;
+    transition: color 0.3s;
+    padding: 5px 0;
+    position: relative;
+}
+
+.nav-links a:hover, .nav-links a.active {
+    color: var(--primary);
+}
+
+.nav-links a.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 3px;
+    background: var(--primary);
+}
+
+.auth-buttons {
+    display: flex;
+    gap: 15px;
+}
+
+.btn {
+    padding: 8px 20px;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    border: none;
+    font-size: 14px;
+}
+
+.btn-outline {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: var(--primary-dark);
+}
+
+.btn-secondary {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-secondary:hover {
+    background: #4cae4c;
+}
+
+.btn-warning {
+    background: var(--warning);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #ec971f;
+}
+
+.btn-danger {
+    background: var(--secondary);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #c9302c;
+}
+
+.btn-sm {
+    padding: 5px 10px;
+    font-size: 12px;
+}
+
+/* Cabin Display Specific Styles */
+.cabin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 30px 0 20px;
+}
+
+.cabin-title {
+    font-size: 24px;
+    color: var(--primary-dark);
+}
+
+.cabin-content {
+    display: grid;
+    grid-template-columns: 1fr 400px;
+    gap: 30px;
+}
+
+/* Cabin Preview */
+.cabin-preview-container {
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 3px 15px rgba(0, 0, 0, 0.08);
+    margin-bottom: 30px;
+}
+
+.preview-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.preview-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+.preview-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.cabin-preview {
+    background: linear-gradient(135deg, var(--primary-dark) 0%, var(--primary) 100%);
+    border-radius: 12px;
+    padding: 30px;
+    color: white;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    position: relative;
+    overflow: hidden;
+}
+
+.cabin-preview::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.cabin-header-info {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.cabin-doctor-name {
+    font-size: 24px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.cabin-doctor-specialty {
+    font-size: 16px;
+    opacity: 0.9;
+}
+
+.cabin-status {
+    text-align: center;
+    margin-bottom: 30px;
+}
+
+.now-serving-label {
+    font-size: 18px;
+    margin-bottom: 10px;
+    opacity: 0.9;
+}
+
+.now-serving-token {
+    font-size: 42px;
+    font-weight: 800;
+    margin-bottom: 10px;
+    letter-spacing: 2px;
+}
+
+.now-serving-patient {
+    font-size: 20px;
+    opacity: 0.9;
+}
+
+.cabin-message {
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 15px;
+    text-align: center;
+    margin: 20px 0;
+    display: none;
+}
+
+.cabin-message.show {
+    display: block;
+}
+
+.cabin-upcoming {
+    margin-top: 30px;
+}
+
+.upcoming-label {
+    font-size: 16px;
+    margin-bottom: 15px;
+    text-align: center;
+    opacity: 0.9;
+}
+
+.upcoming-tokens {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.upcoming-token {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.token-number {
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 5px;
+}
+
+.token-patient {
+    font-size: 14px;
+    opacity: 0.8;
+}
+
+/* Controls Panel */
+.controls-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.control-card {
+    background: white;
+    border-radius: 8px;
+    padding: 20px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--border);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.card-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--primary-dark);
+}
+
+/* Quick Messages */
+.quick-messages {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.message-btn {
+    padding: 10px;
+    background: white;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.3s;
+    text-align: left;
+}
+
+.message-btn:hover {
+    border-color: var(--primary);
+    background: rgba(30, 90, 140, 0.05);
+}
+
+.custom-message {
+    margin-top: 10px;
+}
+
+.message-input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    margin-bottom: 10px;
+    font-size: 14px;
+}
+
+.message-actions {
+    display: flex;
+    gap: 10px;
+}
+
+/* Token Override */
+.token-override {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.override-info {
+    background: rgba(240, 173, 78, 0.1);
+    padding: 12px 15px;
+    border-radius: 4px;
+    font-size: 14px;
+    color: var(--warning);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.token-select {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.token-option {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.token-option:hover {
+    border-color: var(--primary);
+}
+
+.token-option.selected {
+    border-color: var(--primary);
+    background: rgba(30, 90, 140, 0.05);
+}
+
+.token-details {
+    display: flex;
+    flex-direction: column;
+}
+
+.token-id {
+    font-weight: 600;
+    margin-bottom: 3px;
+}
+
+.token-patient-name {
+    font-size: 13px;
+    color: var(--gray);
+}
+
+/* Privacy Controls */
+.privacy-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.privacy-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid var(--light-gray);
+}
+
+.privacy-label {
+    font-weight: 500;
+}
+
+.toggle-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px;
+    height: 24px;
+}
+
+.toggle-switch input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+}
+
+.toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 24px;
+}
+
+.toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .toggle-slider {
+    background-color: var(--accent);
+}
+
+input:checked + .toggle-slider:before {
+    transform: translateX(26px);
+}
+
+/* Status Controls */
+.status-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.status-options {
+    display: flex;
+    gap: 10px;
+}
+
+.status-btn {
+    flex: 1;
+    padding: 10px;
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    transition: all 0.3s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 5px;
+}
+
+.status-btn:hover {
+    border-color: var(--primary);
+}
+
+.status-btn.active {
+    border-color: var(--primary);
+    background: rgba(30, 90, 140, 0.05);
+}
+
+.status-icon {
+    font-size: 18px;
+}
+
+.status-label {
+    font-size: 12px;
+    font-weight: 500;
+}
+
+/* Notification Toast */
+.toast {
+    position: fixed;
+    bottom: 20px;
+    left: 20px;
+    background: var(--accent);
+    color: white;
+    padding: 15px 20px;
+    border-radius: 4px;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    z-index: 2000;
+    transform: translateY(100px);
+    opacity: 0;
+    transition: all 0.3s;
+}
+
+.toast.show {
+    transform: translateY(0);
+    opacity: 1;
+}
+
+/* Responsive Styles */
+@media (max-width: 992px) {
+    .cabin-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .quick-messages {
+        grid-template-columns: 1fr;
+    }
+}
+
+@media (max-width: 768px) {
+    .upcoming-tokens {
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .status-options {
+        flex-direction: column;
+    }
+}

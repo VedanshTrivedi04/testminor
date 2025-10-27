@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Test</title>
+</head>
+<body>
+    <h1>Healthcare API Test</h1>
+    <button onclick="testDepartments()">Test Departments API</button>
+    <button onclick="testDoctors()">Test Doctors API</button>
+    <div id="result"></div>
+
+    <script>
+        const API_BASE_URL = 'http://localhost:8000/api';
+
+        async function testDepartments() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing departments API...';
+            
+            try {
+                console.log('Testing departments API...');
+                const response = await fetch(`${API_BASE_URL}/departments/`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Departments data:', data);
+                    resultDiv.innerHTML = `
+                        <h3>✅ Departments API Success!</h3>
+                        <p>Found ${data.count} departments</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<h3>❌ Error: ${response.status}</h3><p>${response.statusText}</p>`;
+                }
+            } catch (error) {
+                console.error('Departments API error:', error);
+                resultDiv.innerHTML = `<h3>❌ Connection Failed</h3><p>${error.message}</p>`;
+            }
+        }
+
+        async function testDoctors() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing doctors API...';
+            
+            try {
+                console.log('Testing doctors API...');
+                const response = await fetch(`${API_BASE_URL}/doctor/`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    console.log('Doctors data:', data);
+                    resultDiv.innerHTML = `
+                        <h3>✅ Doctors API Success!</h3>
+                        <p>Found ${data.length} doctors</p>
+                        <pre>${JSON.stringify(data, null, 2)}</pre>
+                    `;
+                } else {
+                    resultDiv.innerHTML = `<h3>❌ Error: ${response.status}</h3><p>${response.statusText}</p>`;
+                }
+            } catch (error) {
+                console.error('Doctors API error:', error);
+                resultDiv.innerHTML = `<h3>❌ Connection Failed</h3><p>${error.message}</p>`;
+            }
+        }
+
+        // Auto-test on page load
+        window.onload = function() {
+            console.log('Page loaded, testing API connection...');
+            testDepartments();
+        };
+    </script>
+</body>
+</html>
+

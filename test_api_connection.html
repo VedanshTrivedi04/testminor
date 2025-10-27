@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>API Connection Test</title>
+</head>
+<body>
+    <h1>API Connection Test</h1>
+    <button onclick="testConnection()">Test API Connection</button>
+    <div id="result"></div>
+
+    <script>
+        async function testConnection() {
+            const resultDiv = document.getElementById('result');
+            resultDiv.innerHTML = 'Testing connection...';
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/departments/', {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json',
+                    },
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    resultDiv.innerHTML = `<h3>Success!</h3><pre>${JSON.stringify(data, null, 2)}</pre>`;
+                } else {
+                    resultDiv.innerHTML = `<h3>Error: ${response.status}</h3><p>${response.statusText}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<h3>Connection Failed</h3><p>${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
+
