@@ -65,8 +65,8 @@ function Header() {
             <ul className="nav-links">
               <li><NavLink to="/patient/dashboard" className={({ isActive }) => isActive ? 'active' : ''}>Home</NavLink></li>
               <li><NavLink to="/appointment" className={({ isActive }) => isActive ? 'active' : ''}>Book Appointment</NavLink></li>
-              <li><NavLink to="/profile" className={({ isActive }) => isActive ? 'active' : ''}>Track Token</NavLink></li>
-              <li><NavLink to="/departments" className={({ isActive }) => isActive ? 'active' : ''}>Departments</NavLink></li>
+              <li><NavLink to="/profile" className={({ isActive }) => isActive ? 'active' : ''}>Profile</NavLink></li>
+              <li><NavLink to="/department" className={({ isActive }) => isActive ? 'active' : ''}>Departments</NavLink></li>
               <li><NavLink to="/contact" className={({ isActive }) => isActive ? 'active' : ''}>Contact Us</NavLink></li>
             </ul>
             

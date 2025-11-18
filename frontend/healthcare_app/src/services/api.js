@@ -1,6 +1,6 @@
 // src/services/api.js
 
-const API_BASE_URL = 'http://127.0.0.1:8000/api'; // ✅ use 127.0.0.1 for stability
+const API_BASE_URL = 'http://127.0.0.1:8000/api';
 
 class ApiService {
   constructor() {
@@ -26,16 +26,17 @@ class ApiService {
   // 🧾 HEADERS
   // ======================
   getHeaders() {
-    const headers = { 'Content-Type': 'application/json' };
-    if (this.token) headers['Authorization'] = `Bearer ${this.token}`;
+    const headers = { "Content-Type": "application/json" };
+    if (this.token) headers["Authorization"] = `Bearer ${this.token}`;
     return headers;
   }
 
   // ======================
-  // 🌐 GENERIC REQUEST HANDLER
+  // 🌐 REQUEST HANDLER
   // ======================
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+
     const config = {
       ...options,
       headers: {
@@ -47,266 +48,313 @@ class ApiService {
     try {
       const response = await fetch(url, config);
 
-      // --- Unauthorized Handling ---
       if (response.status === 401) {
         const refreshed = await this.refreshToken();
         if (refreshed) {
-          config.headers['Authorization'] = `Bearer ${this.token}`;
-          const retryResponse = await fetch(url, config);
-          if (!retryResponse.ok) throw new Error(`HTTP ${retryResponse.status}`);
-          return await retryResponse.json();
-        } else {
-          this.clearToken();
-          throw new Error('Unauthorized');
+          config.headers["Authorization"] = `Bearer ${this.token}`;
+          const retry = await fetch(url, config);
+          if (!retry.ok) throw new Error(`HTTP ${retry.status}`);
+          return retry.json();
         }
+        this.clearToken();
+        throw new Error("Unauthorized");
       }
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ detail: `HTTP ${response.status}` }));
-        const error = new Error(errorData.detail || `HTTP ${response.status}`);
-        error.response = { data: errorData, status: response.status };
+        const err = await response.json().catch(() => ({
+          detail: `HTTP ${response.status}`
+        }));
+        const error = new Error(err.detail);
+        error.response = { data: err, status: response.status };
         throw error;
       }
 
-      return await response.json();
-    } catch (error) {
-      console.error('API request failed:', error);
-      throw error;
+      return response.json();
+    } catch (err) {
+      console.error("API request failed:", err);
+      throw err;
     }
   }
 
   // ======================
-  // 🧩 SAFE REQUEST (AUTO TOKEN CHECK)
+  // 🧩 SAFE REQUEST
   // ======================
   async safeRequest(endpoint, options = {}) {
     if (!this.token) {
       const refreshed = await this.refreshToken();
-      if (!refreshed) throw new Error('Not authenticated');
+      if (!refreshed) throw new Error("Not authenticated");
     }
     return this.request(endpoint, options);
   }
 
   // ======================
-  // 🔁 TOKEN REFRESH
+  // 🔁 REFRESH TOKEN
   // ======================
   async refreshToken() {
-    const refreshToken = localStorage.getItem('refresh_token');
+    const refreshToken = localStorage.getItem("refresh_token");
     if (!refreshToken) return false;
 
     try {
       const response = await fetch(`${this.baseURL}/token/refresh/`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ refresh: refreshToken }),
       });
 
       if (response.ok) {
         const data = await response.json();
         this.setToken(data.access);
-        if (data.refresh) localStorage.setItem('refresh_token', data.refresh);
+        if (data.refresh) localStorage.setItem("refresh_token", data.refresh);
         return true;
-      } else {
-        this.clearToken();
-        return false;
       }
-    } catch (error) {
-      console.error('Token refresh failed:', error);
+
+      this.clearToken();
+      return false;
+    } catch (err) {
       this.clearToken();
       return false;
     }
   }
 
   // ======================
-  // 👤 AUTH ENDPOINTS
+  // 👤 AUTH
   // ======================
   async register(userData) {
-    return this.request('/auth/register/', {
-      method: 'POST',
+    return this.request("/auth/register/", {
+      method: "POST",
       body: JSON.stringify(userData),
     });
   }
 
   async login(credentials) {
-    const response = await this.request('/auth/login/', {
-      method: 'POST',
+    const response = await this.request("/auth/login/", {
+      method: "POST",
       body: JSON.stringify(credentials),
     });
+
     if (response.access) {
       this.setToken(response.access);
-      localStorage.setItem('refresh_token', response.refresh);
+      localStorage.setItem("refresh_token", response.refresh);
     }
+
     return response;
   }
 
   async logout() {
-    const refreshToken = localStorage.getItem('refresh_token');
-    if (refreshToken) {
-      try {
-        await fetch(`${this.baseURL}/token/blacklist/`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ refresh: refreshToken }),
-        });
-      } catch (error) {
-        console.error('Logout error:', error);
-      }
+    const refresh = localStorage.getItem("refresh_token");
+    if (refresh) {
+      await fetch(`${this.baseURL}/token/blacklist/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh }),
+      });
     }
     this.clearToken();
   }
 
   // ======================
-  // 🧍 PATIENT ENDPOINTS
+  // 🧍 PATIENT
   // ======================
   async getPatientProfile() {
-    return this.safeRequest('/patient/profile/');
+    return this.safeRequest("/patient/profile/");
   }
 
   async updatePatientProfile(data) {
-    return this.safeRequest('/patient/update_profile/', {
-      method: 'PATCH',
+    return this.safeRequest("/patient/update_profile/", {
+      method: "PATCH",
       body: JSON.stringify(data),
     });
   }
 
   async getPatientDashboard() {
-    return this.safeRequest('/patient/dashboard/');
+    return this.safeRequest("/patient/dashboard/");
   }
 
   async getMedicalHistory() {
-    return this.safeRequest('/patient/medical_history/');
+    return this.safeRequest("/patient/medical_history/");
   }
 
   async getPatientAppointments() {
-    return this.safeRequest('/patient/appointments/');
+    return this.safeRequest("/patient/appointments/");
   }
 
   // ======================
-  // 🏥 DEPARTMENT ENDPOINTS
+  // 🏥 DEPARTMENTS
   // ======================
   async getDepartments() {
-    return this.request('/departments/');
+    return this.request("/departments/");
   }
 
   // ======================
-  // 🩺 DOCTOR ENDPOINTS
+  // 🩺 DOCTORS
   // ======================
   async getDoctors() {
-    return this.safeRequest('/doctor/');
+    return this.safeRequest("/doctor/");
   }
 
-  async getDoctorsByDepartment(departmentId) {
-    return this.safeRequest(`/doctor/?department=${departmentId}`);
+  async getDoctorsByDepartment(id) {
+    return this.safeRequest(`/doctor/?department=${id}`);
   }
 
-  async getDoctorDetail(doctorId) {
-    return this.safeRequest(`/doctor/${doctorId}/`);
+  async getDoctorDetail(id) {
+    return this.safeRequest(`/doctor/${id}/`);
   }
 
   async getDoctorAppointments() {
-    return this.safeRequest('/doctor/appointments/');
-  }
-
-  async getDoctorQueue() {
-    return this.safeRequest('/doctor/queue/');
+    return this.safeRequest("/doctor/appointments/");
   }
 
   // ======================
-  // 📅 APPOINTMENT ENDPOINTS
+  // ⭐ FIXED ⭐
+  // DOCTOR QUEUE (OLD WRONG ENDPOINT REMOVED)
+  // ======================
+  async getDoctorDashboard() {
+    return this.safeRequest("/doctor/dashboard/");
+  }
+
+  // ======================
+  // ⭐ FIXED — REAL BACKEND ROUTES ⭐
+  // START / END CONSULTATION
+  // ======================
+  async startConsultation(appointmentId) {
+    return this.safeRequest(`/doctor/${appointmentId}/start_consultation/`, {
+      method: "POST",
+    });
+  }
+
+  async endConsultation(appointmentId) {
+    return this.safeRequest(`/doctor/${appointmentId}/end_consultation/`, {
+      method: "POST",
+    });
+  }
+
+  // ======================
+  // UPDATE DOCTOR AVAILABILITY
+  // ======================
+ async updateDoctorAvailability(data) {
+  return this.safeRequest(`/doctor/availability/`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+
+async getQueueStatus(doctorId) {
+  return this.safeRequest(`/appointments/queue_status/?doctor_id=${doctorId}`);
+}
+
+  // ======================
+  // 📅 APPOINTMENTS
   // ======================
   async getAppointments() {
-    return this.safeRequest('/appointments/');
+    return this.safeRequest("/appointments/");
   }
 
   async createAppointment(data) {
-    return this.safeRequest('/appointments/', {
-      method: 'POST',
+    return this.safeRequest("/appointments/", {
+      method: "POST",
       body: JSON.stringify(data),
     });
   }
 
-  async getAppointment(appointmentId) {
-    return this.safeRequest(`/appointments/${appointmentId}/`);
+  async getAppointment(id) {
+    return this.safeRequest(`/appointments/${id}/`);
   }
 
-  async cancelAppointment(appointmentId) {
-    return this.safeRequest(`/appointments/${appointmentId}/cancel/`, {
-      method: 'POST',
+  async cancelAppointment(id) {
+    return this.safeRequest(`/appointments/${id}/cancel/`, {
+      method: "POST",
     });
   }
 
-  async completeAppointment(appointmentId) {
-    return this.safeRequest(`/appointments/${appointmentId}/complete/`, {
-      method: 'POST',
+  async completeAppointment(id) {
+    return this.safeRequest(`/appointments/${id}/complete/`, {
+      method: "POST",
     });
   }
 
-  async updateAppointmentStatus(appointmentId, status) {
-    return this.safeRequest(`/appointments/${appointmentId}/status/`, {
-      method: 'PATCH',
+  async updateAppointmentStatus(id, status) {
+    return this.safeRequest(`/appointments/${id}/status/`, {
+      method: "PATCH",
       body: JSON.stringify({ status }),
     });
   }
 
+  // ⭐ AVAILABLE SLOTS ⭐
   async getAvailableSlots(doctorId, date) {
-    return this.request(`/appointments/available_slots/?doctor_id=${doctorId}&date=${date}`);
+    return this.request(
+      `/appointments/available_slots/?doctor_id=${doctorId}&date=${date}`
+    );
   }
 
   // ======================
   // 📚 MEDICAL RECORDS
   // ======================
   async getMedicalRecords() {
-    return this.safeRequest('/medical-records/');
+    return this.safeRequest("/medical-records/");
   }
 
-  async getMedicalRecord(recordId) {
-    return this.safeRequest(`/medical-records/${recordId}/`);
+  async getMedicalRecord(id) {
+    return this.safeRequest(`/medical-records/${id}/`);
   }
 
   // ======================
   // 👨‍👩‍👧 FAMILY MEMBERS
   // ======================
   async getFamilyMembers() {
-    return this.safeRequest('/family-members/');
+    return this.safeRequest("/family-members/");
   }
+async rescheduleAppointment(id, data) {
+  return this.safeRequest(`/appointments/${id}/reschedule/`, {
+    method: "POST",
+    body: JSON.stringify(data),
+  });
+}
+// --- in src/services/api.js, replace the existing startConsultation/endConsultation with:
 
   // ======================
-  // 🕒 QUEUE MANAGEMENT (DOCTOR SIDE)
+  // START / END CONSULTATION (real backend routes)
+  // ======================
+  async startConsultation(appointmentId) {
+    // correct endpoint per your API: POST /api/appointments/{id}/start_consultation/
+    return this.safeRequest(`/appointments/${appointmentId}/start_consultation/`, {
+      method: "POST",
+    });
+  }
+
+  async endConsultation(appointmentId, body = {}) {
+    // correct endpoint: POST /api/appointments/{id}/end_consultation/
+    return this.safeRequest(`/appointments/${appointmentId}/end_consultation/`, {
+      method: "POST",
+      body: JSON.stringify(body),
+    });
+  }
+
+  // alias that LiveSession might expect
+  async finishConsultation(appointmentId) {
+    return this.endConsultation(appointmentId);
+  }
+
+
+  // ======================
+  // 🕒 QUEUE STATUS (VIEW ONLY)
   // ======================
   async getQueue() {
-    return this.safeRequest('/queue/');
-  }
-
-  async startConsultation(appointmentId) {
-    return this.safeRequest(`/queue/start/${appointmentId}/`, {
-      method: 'POST',
-    });
-  }
-
-  async finishConsultation(appointmentId) {
-    return this.safeRequest(`/queue/finish/${appointmentId}/`, {
-      method: 'POST',
-    });
-  }
-
-  async skipConsultation(appointmentId) {
-    return this.safeRequest(`/queue/skip/${appointmentId}/`, {
-      method: 'POST',
-    });
+    return this.safeRequest("/queue-status/");
   }
 
   // ======================
-  // ⚙️ (OPTIONAL) ADMIN ENDPOINTS
+  // ⚙️ ADMIN
   // ======================
   async getAllPatients() {
-    return this.safeRequest('/admin/patients/');
+    return this.safeRequest("/admin/users/");
   }
 
   async getAllAppointments() {
-    return this.safeRequest('/admin/appointments/');
+    return this.safeRequest("/admin/reports/?type=appointments");
   }
 
   async getAllDoctors() {
-    return this.safeRequest('/admin/doctors/');
+    return this.safeRequest("/admin/reports/?type=doctors");
   }
 }
 

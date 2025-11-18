@@ -24,6 +24,7 @@
             line-height: 1.6;
             display: flex;
             flex-direction: column;
+             display: flex;
             min-height: 100vh;
         }
         
@@ -699,8 +700,8 @@
         .doctor-list-item {
             display: flex;
             align-items: center;
-            gap: 15px;
-            padding: 15px;
+            gap: 30px;
+            padding: 5px;
             background: white;
             border-radius: 6px;
             box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);

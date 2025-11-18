@@ -193,6 +193,8 @@ class Doctor(models.Model):
         ],
         default='offline'
     )
+    average_time_per_patient = models.FloatField(null=True, blank=True)
+    waiting_time_estimate = models.FloatField(null=True, blank=True)
 
     # Admin who registered this doctor
     registered_by = models.ForeignKey(

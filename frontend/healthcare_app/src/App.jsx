@@ -17,6 +17,8 @@ import DoctorProfile from './doctorscomponent/DoctorProfile'
 import DoctorHeader from './doctorscomponent/components/DoctorHeader'
 import QueueManagement from './doctorscomponent/QueueManagement'
 import LiveSession from './doctorscomponent/LiveSession'
+import Departmentent from './patientcomponent/pages/Departmentent'
+
 function MainLayout() {
   return (
     <>
@@ -44,12 +46,15 @@ function App() {
       <DataProvider>
         <Routes>
           <Route path="/" element={<MainLayout />}>
-            <Route path='/' element={<HomePage />} />
+            <Route path="/" element={<HomePage />} />
             <Route path='/patient/dashboard' element={<HomePage />} />
             <Route path="appointment" element={<AppointmentPage />} />
             <Route path="profile" element={<MyProfilePage />} />
             <Route path="login" element={<LoginPage />} />
             <Route path="signup" element={<SignUpPage />} />
+            <Route path="department" element={<Departmentent />} />
+
+            
 
           </Route>
           <Route path="/" element={<DoctorMainLayout />}>

@@ -91,7 +91,6 @@ class UserProfileSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'email', 'role', 'is_verified', 'created_at']
 
 
-# ==================== Department & Doctor Serializers ====================
 class DepartmentSerializer(serializers.ModelSerializer):
     """Department serializer"""
     doctor_count = serializers.SerializerMethodField()

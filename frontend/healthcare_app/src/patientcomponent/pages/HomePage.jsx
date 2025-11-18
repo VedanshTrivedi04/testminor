@@ -1,5 +1,4 @@
-// src/pages/HomePage.jsx
-import React, { useEffect } from 'react';
+import React, { useEffect,useState } from 'react';
 import { useData } from '../../contexts/DataContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
@@ -8,21 +7,47 @@ const HomePage = () => {
   const { user, isAuthenticated } = useAuth();
   const { departments, doctors, fetchDepartments, fetchDoctors, isLoading, error } = useData();
   const navigate = useNavigate();
+  useEffect(() => {
+  const loadQueue = async () => {
+    try {
+      const doctorId = 1; // or dynamically load from patient appointment
+      const result = await apiService.getQueueStatus(doctorId);
 
-  // Redirect only once if user has dashboard
+      setQueue(result);
+      setHighlightToken(result.patient_token);
+    } catch (err) {
+      console.log("Queue fetch failed", err);
+    }
+  };
+
+  loadQueue();
+  const interval = setInterval(loadQueue, 3000);
+  return () => clearInterval(interval);
+}, []);
+
+
+  // ✅ Redirect if user has dashboard
   useEffect(() => {
     if (isAuthenticated && user?.dashboard_url) {
       navigate(user.dashboard_url, { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 
-  // Fetch departments and doctors once after authentication
+  // ✅ Fetch departments & doctors on mount (both for public and logged-in users)
   useEffect(() => {
-    if (isAuthenticated) {
-      fetchDepartments();
-      fetchDoctors();
-    }
+    fetchDepartments();
+    fetchDoctors();
   }, [isAuthenticated, fetchDepartments, fetchDoctors]);
+
+  // ✅ Debug logs (optional)
+  useEffect(() => {
+    console.log("Departments:", departments);
+    console.log("Doctors:", doctors);
+  }, [departments, doctors]);
+  const [queue, setQueue] = useState(null);
+const [highlightToken, setHighlightToken] = useState(null);
+
+
 
   return (
     <>
@@ -33,8 +58,13 @@ const HomePage = () => {
             <h1>Welcome to Our Hospital</h1>
             <p>Book appointments, consult doctors, and manage your health easily.</p>
             <div className="hero-buttons">
-              <button className="hero-btn btn-primary" onClick={() => navigate('/appointment')}>Book Appointment</button>
-              <button className="hero-btn btn-outline" onClick={() => navigate('/login')}>Login</button>
+              <button
+                className="hero-btn btn-primary"
+                onClick={() => navigate('/appointment')}
+              >
+                Book Appointment
+              </button>
+
             </div>
           </div>
           <div className="hero-image">
@@ -79,8 +109,35 @@ const HomePage = () => {
           </div>
         </div>
       </section>
+      <div className="queue-box">
+        <h3>Live Queue Status</h3>
 
-      {/* Doctors Section */}
+        <div className="current-token">
+          <span>Now Serving:</span>
+          <strong>{queue?.current_token ?? "—"}</strong>
+        </div>
+
+        <div className="pending-list">
+          <h4>Pending Tokens</h4>
+
+          {queue?.pending_tokens?.length > 0 ? (
+            queue.pending_tokens.map(item => (
+              <div
+                key={item.token_number}
+                className={`token-item ${highlightToken === item.token_number ? "highlight" : ""
+                  }`}
+              >
+                <span className="token-num">Token {item.token_number}</span>
+                <span className="token-name">{item.patient_name}</span>
+              </div>
+            ))
+          ) : (
+            <p>No pending tokens</p>
+          )}
+        </div>
+      </div>
+
+      {/* ✅ Doctors Section */}
       <section className="doctors-section section">
         <div className="container">
           <div className="section-title">
@@ -95,16 +152,26 @@ const HomePage = () => {
             </div>
           ) : error ? (
             <div className="error-message">{error}</div>
-          ) : doctors.length > 0 ? (
+          ) : doctors && doctors.length > 0 ? (
             <div className="doctors-slider">
               {doctors.map((doc) => {
-                // If API returns doctor.user.full_name, adjust here
-                const name = doc.full_name || doc.user?.full_name || 'Doctor Name';
-                const department = doc.department_name || doc.department?.name || 'General';
+                // ✅ Safely extract fields depending on backend structure
+                const name =
+                  doc.full_name ||
+                  doc.user?.full_name ||
+                  `${doc.user?.first_name || ''} ${doc.user?.last_name || ''}`.trim() ||
+                  'Doctor Name';
+
+                const department =
+                  doc.department_name ||
+                  doc.department?.name ||
+                  'General';
+
+                const image = doc.profile_image || '👨‍⚕️';
 
                 return (
-                  <div className="doctor-card" key={doc.id}>
-                    <div className="doctor-img">👨‍⚕️</div>
+                  <div className="doctor-card" key={doc.id || name}>
+                    <div className="doctor-img">{image}</div>
                     <div className="doctor-info">
                       <h3>{name}</h3>
                       <div className="doctor-specialty">{department}</div>
@@ -149,8 +216,6 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-
-     
     </>
   );
 };

@@ -785,3 +785,52 @@ header {
         grid-template-columns: 1fr;
     }
 }
+/* --- NOW SERVING PATIENT DETAILS --- */
+
+.current-patient {
+  display: flex;
+  align-items: flex-start;
+  gap: 18px;
+  background: rgba(255, 255, 255, 0.05);
+  padding: 18px;
+  border-radius: 12px;
+  margin-top: 10px;
+}
+
+.patient-avatar {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.15);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
+.patient-details {
+  color: #e8e8e8;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.patient-details h3 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 22px;
+  font-weight: 600;
+}
+
+.patient-details p {
+  margin: 4px 0;
+  font-size: 15px;
+  color: #dcdcdc;
+}
+
+.patient-details strong {
+  color: #ffffff;
+  font-weight: 600;
+}

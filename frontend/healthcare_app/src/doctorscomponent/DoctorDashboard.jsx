@@ -4,6 +4,7 @@ import { useAuth } from '../contexts/AuthContext';
 import apiService from '../services/api';
 import './DoctorDashboard.css';
 
+
 const DoctorDashboard = () => {
   const { user } = useAuth();
 
@@ -22,133 +23,193 @@ const DoctorDashboard = () => {
     return `${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
   };
 
+  // ============================
+  // FETCH DOCTOR DASHBOARD DATA
+  // ============================
   const fetchDashboardData = async () => {
+    console.log("📡 API CALL → GET /doctor/dashboard/");
     try {
       setLoading(true);
+
       const data = await apiService.safeRequest('/doctor/dashboard/');
+      console.log("✅ API RESPONSE → /doctor/dashboard/", data);
 
-      const allAppointments = data.today_appointments || [];
+      const todayAppointments = data.today_appointments || [];
 
-      // ✅ Filter queue → only in-progress or pending appointments
-      const activeQueue = allAppointments.filter((a) =>
-        ['waiting', 'inprogress', 'scheduled', 'confirmed'].includes(a.status)
+      const queueData = todayAppointments.filter(a =>
+        ['waiting', 'in_progress', 'scheduled', 'confirmed'].includes(a.status)
       );
 
-      // ✅ Filter upcoming → only future/scheduled ones (not started)
-      const upcomingPatients = allAppointments.filter((a) =>
+      const upcomingList = todayAppointments.filter(a =>
         ['scheduled', 'confirmed'].includes(a.status)
       );
 
       setDoctor(data.profile);
-      setQueue(activeQueue);
-      setUpcoming(upcomingPatients);
-      setQueueStats(data.current_queue || null);
+      setQueue(queueData);
+      setUpcoming(upcomingList);
+      setQueueStats(data.current_queue);
+
     } catch (err) {
-      console.error('Error fetching doctor dashboard:', err);
+      console.error("❌ API ERROR → /doctor/dashboard/", err);
     } finally {
       setLoading(false);
     }
   };
 
   const getActiveAppointment = () => {
-    if (!queueStats?.current_token)
-      return queue.find((a) =>
-        ['inprogress', 'waiting'].includes(a.status)
-      );
-    return queue.find((a) => a.token_number === queueStats.current_token);
-  };
-
-  // ✅ FIXED: Corrected endpoint for ending consultation
-  const handleEndConsultation = async () => {
-    const active = getActiveAppointment();
-    if (!active) return alert('No active consultation found.');
-
-    try {
-      await apiService.safeRequest(`/appointments/${active.id}/endconsultation/`, {
-        method: 'POST',
-        body: JSON.stringify({
-          notes: 'Consultation completed successfully.',
-        }),
-      });
-      alert(`Consultation for Token #${active.token_number} ended successfully.`);
-      setTimer(0);
-      await fetchDashboardData();
-    } catch (err) {
-      console.error('Error ending consultation:', err);
-      alert('Failed to end consultation.');
+    if (!queueStats?.current_token) {
+      return queue.find(a => ['in_progress', 'waiting'].includes(a.status));
     }
+    return queue.find(a => a.token_number === queueStats.current_token);
   };
 
-  // ✅ FIXED: Corrected endpoint for starting consultation
+  // ============================
+  // START CONSULTATION
+  // ============================
   const handleCallNext = async () => {
-    const next = queue.find((a) =>
+    const next = queue.find(a =>
       ['scheduled', 'confirmed', 'waiting'].includes(a.status)
     );
-    if (!next) return alert('No next patient in queue.');
+
+    if (!next) return alert("No next patient.");
+
+    console.log("📡 API CALL → START CONSULTATION for ID:", next.id);
 
     try {
-      await apiService.safeRequest(`/appointments/${next.id}/startconsultation/`, {
-        method: 'POST',
+      const res = await apiService.safeRequest(`/appointments/${next.id}/start_consultation/`, {
+        method: "POST"
       });
-      alert(`Next patient Token #${next.token_number} is now in consultation.`);
-      await fetchDashboardData();
+
+      console.log("✅ API RESPONSE → start_consultation", res);
+
+      alert(`Token #${next.token_number} now in consultation.`);
+      fetchDashboardData();
+      setTimer(0);
     } catch (err) {
-      console.error('Error calling next patient:', err);
-      alert('Error calling next patient (check your backend endpoint).');
+      console.error("❌ API ERROR → start_consultation", err);
+      alert("Failed to start consultation.");
     }
   };
 
-  // ✅ FIXED: Corrected endpoint for marking no-show
+  // ============================
+  // END CONSULTATION
+  // ============================
+  // ============================
+  // END CONSULTATION + AUTO CALL NEXT
+  // ============================
+  const handleEndConsultation = async () => {
+    const active = getActiveAppointment();
+    if (!active) return alert("No active consultation.");
+
+    console.log("📡 API CALL → END CONSULTATION for ID:", active.id);
+
+    try {
+      const res = await apiService.safeRequest(
+        `/appointments/${active.id}/end_consultation/`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            notes: "Consultation completed successfully."
+          })
+        }
+      );
+
+      console.log("✅ API RESPONSE → end_consultation", res);
+
+      // Reset timer and refresh dashboard
+      setTimer(0);
+      await fetchDashboardData();
+
+      // 🚀 AUTO CALL NEXT PATIENT
+      handleCallNext();
+
+    } catch (err) {
+      console.error("❌ API ERROR → end_consultation", err);
+      alert("Could not end consultation.");
+    }
+  };
+
+
+  // ============================
+  // MARK NO-SHOW
+  // ============================
+  // ============================
+  // MARK NO-SHOW + AUTO CALL NEXT
+  // ============================
   const handleMarkNoShow = async () => {
     const active = getActiveAppointment();
-    if (!active) return alert('No active patient to mark no-show.');
+    if (!active) return alert("No active patient.");
+
+    console.log("📡 API CALL → MARK NO-SHOW for ID:", active.id);
 
     try {
-      await apiService.safeRequest(`/appointments/${active.id}/endconsultation/`, {
-        method: 'POST',
-        body: JSON.stringify({
-          no_show: true,
-          notes: 'Patient marked as no-show.',
-        }),
-      });
-      alert(`Token #${active.token_number} marked as no-show.`);
+      const res = await apiService.safeRequest(
+        `/doctor/${active.id}/end_consultation/`,
+        {
+          method: "POST",
+          body: JSON.stringify({
+            no_show: true,
+            notes: "Patient marked as no-show."
+          })
+        }
+      );
+
+      handleCallNext();
+      console.log("✅ API RESPONSE → no-show", res);
+
+      // Refresh dashboard
       await fetchDashboardData();
+
+      // 🚀 AUTO CALL NEXT PATIENT
+      handleCallNext();
+
     } catch (err) {
-      console.error('Error marking No-Show:', err);
-      alert('Unable to mark No-Show.');
+      console.error("❌ API ERROR → no-show", err);
+      alert("Cannot mark no-show.");
     }
   };
 
+
+  // ============================
+  // AVAILABILITY STATUS
+  // ============================
   const handleStatusChange = async (status) => {
     setDoctorStatus(status);
+
+    const payload = {
+      day_of_week: new Date().toLocaleDateString("en-US", { weekday: "long" }).toLowerCase(),
+      start_time: "09:00",
+      end_time: "17:00",
+      is_available: status === "online",
+      is_active: status === "online",
+    };
+
+    console.log("📡 API CALL → UPDATE AVAILABILITY", payload);
+
     try {
-      await apiService.safeRequest('/doctor/availability/', {
-        method: 'POST',
-        body: JSON.stringify({
-          is_available: status === 'online',
-          is_active: status === 'online',
-        }),
-      });
+      const res = await apiService.updateDoctorAvailability(payload);
+      console.log("✅ API RESPONSE → updateDoctorAvailability", res);
     } catch (err) {
-      console.error('Error changing status:', err);
+      console.error("❌ API ERROR → updateDoctorAvailability", err);
     }
   };
 
   const handlePauseTokens = async () => {
-    try {
-      await apiService.safeRequest('/doctor/availability/', {
-        method: 'POST',
-        body: JSON.stringify({ is_available: false, is_active: false }),
-      });
-      setDoctorStatus('paused');
-      alert('Paused accepting new tokens.');
-    } catch (err) {
-      console.error('Error pausing tokens:', err);
-    }
-  };
+    console.log("📡 API CALL → PAUSE TOKENS");
 
-  const handleRequestAssistance = () => {
-    alert('Assistance request sent to admin.');
+    try {
+      const res = await apiService.safeRequest('/doctor/availability/', {
+        method: 'POST',
+        body: JSON.stringify({ is_available: false, is_active: false })
+      });
+
+      console.log("✅ API RESPONSE → pause tokens", res);
+
+      setDoctorStatus("paused");
+      alert("Doctor paused accepting tokens.");
+    } catch (err) {
+      console.error("❌ API ERROR → pause tokens", err);
+    }
   };
 
   useEffect(() => {
@@ -156,13 +217,13 @@ const DoctorDashboard = () => {
   }, []);
 
   useEffect(() => {
-    const t = setInterval(() => setTimer((p) => p + 1), 1000);
-    return () => clearInterval(t);
+    const interval = setInterval(() => setTimer((p) => p + 1), 1000);
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
-    const offline = setTimeout(() => setIsOffline(true), 15000);
-    return () => clearTimeout(offline);
+    const offlineTimeout = setTimeout(() => setIsOffline(true), 15000);
+    return () => clearTimeout(offlineTimeout);
   }, []);
 
   if (loading) return <div className="loading-screen">Loading dashboard...</div>;
@@ -170,34 +231,34 @@ const DoctorDashboard = () => {
   const statusMap = {
     online: { cls: 'status-online', text: 'Accepting Tokens', icon: 'fas fa-circle' },
     paused: { cls: 'status-offline', text: 'Paused', icon: 'fas fa-circle' },
-    break: { cls: 'status-break', text: 'On Break', icon: 'fas fa-circle' },
+    break: { cls: 'status-break', text: 'On Break', icon: 'fas fa-circle' }
   };
 
   const s = statusMap[doctorStatus];
   const tooManyPatients = queue.length > 5;
-
   return (
     <>
-      {/* Header */}
+      {/* HEADER */}
       <div className="container">
         <div className="doctor-header">
           <div className="doctor-info">
-            <div className="doctor-avatar"><i className="fas fa-user-md" /></div>
+            <div className="doctor-avatar"><i className="fas fa-user-md"></i></div>
             <div className="doctor-details">
-              <h1>{doctor?.full_name || 'Dr. Unknown'}</h1>
-              <p>{doctor?.specialty || 'Specialist'}</p>
-              <p><i className="far fa-clock" /> Current Shift: 9:00 AM - 5:00 PM</p>
+              <h1>{doctor?.full_name}</h1>
+              <p>{doctor?.specialty}</p>
+              <p><i className="far fa-clock"></i> Shift: 9:00 AM – 5:00 PM</p>
               <div className={`status-badge ${s.cls}`}>
-                <i className={s.icon} /> {s.text}
+                <i className={s.icon}></i> {s.text}
               </div>
             </div>
           </div>
+
           <div className="status-toggle">
-            {['online', 'paused', 'break'].map((state) => (
+            {["online", "paused", "break"].map((state) => (
               <button
                 key={state}
-                className={`toggle-btn ${doctorStatus === state ? 'active' : ''}`}
                 onClick={() => handleStatusChange(state)}
+                className={`toggle-btn ${doctorStatus === state ? "active" : ""}`}
               >
                 {state.charAt(0).toUpperCase() + state.slice(1)}
               </button>
@@ -206,40 +267,62 @@ const DoctorDashboard = () => {
         </div>
       </div>
 
-      {/* Dashboard */}
+      {/* MAIN DASHBOARD */}
       <div className="container">
         <div className="dashboard">
+
+          {/* LEFT — NOW SERVING + QUEUE */}
           <div className="dashboard-main">
-            {/* Now Serving */}
+
+            {/* NOW SERVING */}
             <div className="dashboard-card now-serving">
               <div className="card-header">
                 <h2 className="card-title" style={{ color: 'white' }}>Now Serving</h2>
                 <div className="consultation-timer">{formatTime(timer)}</div>
               </div>
+
               <div className="current-patient">
-                <div className="patient-avatar"><i className="fas fa-user" /></div>
+                <div className="patient-avatar"><i className="fas fa-user"></i></div>
+
                 <div className="patient-details">
-                  <h3>Token #{queueStats?.current_token || 'N/A'}</h3>
-                  <p>Patients Served: {queueStats?.completed_tokens || 0}</p>
-                  <p>Avg. Time: {queueStats?.average_time_per_patient || 'N/A'} min</p>
+                  <h3>Token N0   {getActiveAppointment()?.
+                    token_number
+                    || "—"}</h3>
+
+                  {/* Patient Name */}
+                  <p><strong>Patient:</strong> {getActiveAppointment()?.patient_name || "—"}</p>
+
+                  {/* Reason for visit */}
+                  <p><strong>Reason:</strong> {getActiveAppointment()?.reason || "—"}</p>
+
+                  {/* Appointment Time */}
+                  <p><strong>Time:</strong> {getActiveAppointment()?.time_slot || "—"}</p>
+
+                  {/* Status */}
+                  <p><strong>Status:</strong> {getActiveAppointment()?.status || "—"}</p>
+
+                  {/* Completed count */}
+                  <p><strong>Patients Served:</strong> {queueStats?.completed_tokens || 0}</p>
                 </div>
               </div>
+
               <div className="consultation-actions">
                 <button className="btn btn-secondary" onClick={handleEndConsultation}>
-                  <i className="fas fa-check-circle" /> End Consultation
+                  <i className="fas fa-check-circle"></i> End Consultation
                 </button>
                 <button className="btn btn-danger" onClick={handleMarkNoShow}>
-                  <i className="fas fa-times-circle" /> Mark No-Show
+                  <i className="fas fa-times-circle"></i> No-Show
                 </button>
               </div>
             </div>
 
-            {/* Queue */}
+            {/* QUEUE LIST */}
             <div className="dashboard-card">
               <div className="card-header">
-                <h2 className="card-title">Today's Queue</h2>
+                <h2>Today's Queue</h2>
                 <div className="queue-count">{queue.length} Patients</div>
               </div>
+
               <div className="queue-list">
                 {queue.map((appt) => (
                   <div className="queue-item" key={appt.id}>
@@ -251,7 +334,7 @@ const DoctorDashboard = () => {
                       </div>
                     </div>
                     <div className="queue-status">
-                      <div className="eta">Time: {appt.time_slot}</div>
+                      <div className="eta">{appt.time_slot}</div>
                       <div className={`status-label status-${appt.status}`}>{appt.status}</div>
                     </div>
                   </div>
@@ -259,38 +342,44 @@ const DoctorDashboard = () => {
               </div>
             </div>
 
-            {/* Workload Warning */}
             {tooManyPatients && (
               <div className="workload-warning show">
                 <div className="warning-header">
-                  <i className="fas fa-exclamation-triangle" />
-                  <h3>High Queue Load Warning</h3>
+                  <i className="fas fa-exclamation-triangle"></i>
+                  <h3>High Queue Load</h3>
                 </div>
-                <p>Your queue exceeds the optimal threshold. Consider pausing or seeking help.</p>
+                <p>Queue is too long. You may pause or request assistance.</p>
+
                 <div className="warning-actions">
                   <button className="btn btn-warning" onClick={handlePauseTokens}>
-                    <i className="fas fa-pause" /> Pause New Tokens
+                    <i className="fas fa-pause"></i> Pause Tokens
                   </button>
-                  <button className="btn btn-outline" onClick={handleRequestAssistance}>
-                    <i className="fas fa-user-md" /> Request Assistance
+                  <button className="btn btn-outline">
+                    <i className="fas fa-user-md"></i> Request Help
                   </button>
                 </div>
               </div>
             )}
+
           </div>
 
-          {/* Sidebar */}
+          {/* RIGHT — UPCOMING + STATS */}
           <div className="dashboard-sidebar">
+
+            {/* UPCOMING PATIENTS */}
             <div className="dashboard-card">
               <div className="card-header"><h2>Upcoming Patients</h2></div>
+
               <div className="upcoming-patients">
                 {upcoming.map((p) => (
                   <div className="upcoming-patient" key={p.id}>
                     <div className="upcoming-patient-info">
-                      <div className="upcoming-patient-avatar"><i className="fas fa-user" /></div>
+                      <div className="upcoming-patient-avatar"><i className="fas fa-user"></i></div>
                       <div>
                         <div className="patient-name">{p.patient_name}</div>
-                        <div className="appointment-type">{p.token_number} • {p.time_slot}</div>
+                        <div className="appointment-type">
+                          {p.token_number} • {p.time_slot}
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -298,27 +387,45 @@ const DoctorDashboard = () => {
               </div>
             </div>
 
+            {/* QUICK STATS */}
             <div className="dashboard-card">
               <div className="card-header"><h2>Quick Stats</h2></div>
+
               <div className="stats-grid">
-                <div className="stat-card"><div className="stat-value">{queue.length}</div><div className="stat-label">Waiting</div></div>
-                <div className="stat-card"><div className="stat-value">{queueStats?.completed_tokens || 0}</div><div className="stat-label">Completed</div></div>
-                <div className="stat-card"><div className="stat-value">{queueStats?.average_time_per_patient || 'N/A'} min</div><div className="stat-label">Avg Time</div></div>
+                <div className="stat-card">
+                  <div className="stat-value">{queue.length}</div>
+                  <div className="stat-label">Waiting</div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-value">{queueStats?.completed_tokens || 0}</div>
+                  <div className="stat-label">Completed</div>
+                </div>
+
+                <div className="stat-card">
+                  <div className="stat-value">
+                    {queueStats?.average_time_per_patient || "N/A"} min
+                  </div>
+                  <div className="stat-label">Avg Time</div>
+                </div>
               </div>
             </div>
 
+            {/* CALL NEXT BUTTON */}
             <div className="call-next-container">
               <button className="call-next-btn" onClick={handleCallNext}>
-                <i className="fas fa-bullhorn" /> Call Next Patient
+                <i className="fas fa-bullhorn"></i> Call Next Patient
               </button>
             </div>
+
           </div>
+
         </div>
       </div>
 
       <div className={`network-status ${isOffline ? 'show' : ''}`}>
-        <i className="fas fa-wifi" />
-        <span>Live updates paused — Offline mode active.</span>
+        <i className="fas fa-wifi"></i>
+        <span>Offline mode — waiting for connection...</span>
       </div>
     </>
   );
